@@ -1,0 +1,68 @@
+// Prisma schema for IQIN Copyright Deposit Service
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  passwordHash String
+  firstName    String
+  middleName   String?
+  lastName     String
+  phone        String?
+  country      String        @default("RU")
+  city         String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  certificates Certificate[]
+}
+
+model Certificate {
+  id            String   @id @default(cuid())
+  // Public certificate number: e.g. 2025-001
+  certNumber    String   @unique
+  certYear      Int
+  certSeq       Int
+
+  // Work metadata
+  workTitle     String
+  workType      String   // text, image, audio, video, code, collection, other
+  description   String?
+  coAuthors     String?  // comma-separated names
+
+  // Archive file info
+  archiveName   String   // original filename, e.g. "1.zip"
+  archiveSize   Int      // bytes
+  archivePath   String   // server path under /uploads
+  md5Hash       String   // hex MD5 of archive bytes
+
+  // Author snapshot at moment of deposit (denormalized for certificate stability)
+  authorFirstName String
+  authorMiddleName String?
+  authorLastName  String
+  authorCountry   String
+  authorEmail     String
+  authorPhone     String?
+  authorCity      String?
+
+  // Relations
+  authorId      String
+  author        User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  // Status
+  status        String   @default("published") // published | pending | rejected
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([authorId])
+  @@index([certYear, certSeq])
+}

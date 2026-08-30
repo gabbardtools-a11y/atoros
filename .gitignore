@@ -1,0 +1,14 @@
+.env
+.env.local
+node_modules/
+.next/
+uploads/
+db/
+*.log
+server.log
+dev.log
+tool-results/
+skills/
+tests/
+page1_img*
+worklog.md
