@@ -21,11 +21,11 @@ export default async function Home() {
   const { total } = await getStats();
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col bg-background">
       <Header session={session} />
 
       {/* Hero */}
-      <section className="relative overflow-hidden border-b border-slate-100">
+      <section className="relative overflow-hidden border-b border-border">
         {/* Millimeter grid background */}
         <div
           className="absolute inset-0 pointer-events-none opacity-50"
@@ -38,18 +38,18 @@ export default async function Home() {
 
         <div className="relative max-w-6xl mx-auto px-6 py-20 md:py-28">
           <div className="text-center max-w-3xl mx-auto">
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 mb-6">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary mb-6">
               <ShieldCheck className="h-3.5 w-3.5" />
               Тестовый режим · архивы до 10 МБ · хеш MD5
             </div>
 
-            <h1 className="text-4xl md:text-6xl font-light tracking-tight text-slate-900 mb-6">
-              Депонирование <span className="text-blue-600 font-semibold">авторских прав</span>
+            <h1 className="text-4xl md:text-6xl font-light tracking-tight text-foreground mb-6">
+              Депонирование <span className="text-primary font-semibold">авторских прав</span>
               <br />
               за 60 секунд
             </h1>
 
-            <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
               Загрузите архив с произведением — мы вычислим его уникальный цифровой отпечаток
               (хеш-сумму MD5) и опубликуем свидетельство о депонировании с уникальным номером.
               Подтверждение авторства в любой момент через онлайн-верификацию.
@@ -59,7 +59,7 @@ export default async function Home() {
               {session?.user ? (
                 <Link
                   href="/dashboard"
-                  className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition"
+                  className="inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 transition"
                 >
                   Перейти в кабинет
                   <ArrowRight className="h-4 w-4" />
@@ -68,14 +68,14 @@ export default async function Home() {
                 <>
                   <Link
                     href="/auth/register"
-                    className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition"
+                    className="inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 transition"
                   >
                     Начать депонирование
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                   <Link
                     href="/auth/login"
-                    className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                    className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-6 py-3 text-sm font-semibold text-foreground hover:bg-muted transition"
                   >
                     Войти
                   </Link>
@@ -83,7 +83,7 @@ export default async function Home() {
               )}
             </div>
 
-            <div className="flex items-center justify-center gap-6 text-xs text-slate-500">
+            <div className="flex items-center justify-center gap-6 text-xs text-muted-foreground">
               <div className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
                 Без бумажной почты
@@ -102,13 +102,13 @@ export default async function Home() {
       </section>
 
       {/* How it works */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-background">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-14">
-            <div className="text-xs font-bold tracking-widest uppercase text-blue-600 mb-2">
+            <div className="text-xs font-bold tracking-widest uppercase text-primary mb-2">
               Как это работает
             </div>
-            <h2 className="text-3xl font-semibold text-slate-900">
+            <h2 className="text-3xl font-semibold text-foreground">
               Четыре шага до свидетельства
             </h2>
           </div>
@@ -140,13 +140,13 @@ export default async function Home() {
                 desc: 'Получите страницу-свидетельство с уникальным номером и QR-кодом верификации',
               },
             ].map((s) => (
-              <div key={s.step} className="relative bg-white border border-slate-100 rounded-lg p-6 hover:border-blue-200 transition group">
-                <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 group-hover:bg-blue-100 transition">
+              <div key={s.step} className="relative bg-card border border-border rounded-lg p-6 hover:border-primary/50 transition group">
+                <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:bg-primary/20 transition">
                   <s.icon className="h-5 w-5" />
                 </div>
-                <div className="text-xs font-mono text-slate-400 mb-2">{s.step}</div>
-                <h3 className="text-base font-semibold text-slate-900 mb-2">{s.title}</h3>
-                <p className="text-sm text-slate-600 leading-relaxed">{s.desc}</p>
+                <div className="text-xs font-mono text-muted-foreground mb-2">{s.step}</div>
+                <h3 className="text-base font-semibold text-foreground mb-2">{s.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
               </div>
             ))}
           </div>
@@ -154,17 +154,17 @@ export default async function Home() {
       </section>
 
       {/* CTA */}
-      <section className="py-20 bg-slate-50 border-t border-slate-100">
+      <section className="py-20 bg-muted/50 border-t border-border">
         <div className="max-w-3xl mx-auto px-6 text-center">
-          <h2 className="text-3xl font-semibold text-slate-900 mb-4">
+          <h2 className="text-3xl font-semibold text-foreground mb-4">
             Защитите своё произведение прямо сейчас
           </h2>
-          <p className="text-slate-600 mb-8">
+          <p className="text-muted-foreground mb-8">
             Регистрация займёт меньше минуты. Первое свидетельство — бесплатно.
           </p>
           <Link
             href={session?.user ? '/dashboard' : '/auth/register'}
-            className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition"
+            className="inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 transition"
           >
             {session?.user ? 'В личный кабинет' : 'Создать аккаунт'}
             <ArrowRight className="h-4 w-4" />
@@ -187,10 +187,10 @@ function pluralize(n: number, one: string, few: string, many: string) {
 
 function Footer() {
   return (
-    <footer className="mt-auto border-t border-slate-100 bg-white">
-      <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+    <footer className="mt-auto border-t border-border bg-background">
+      <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
         <div className="flex items-center gap-2">
-          <span className="font-bold text-slate-700">Atoros.ru</span>
+          <span className="font-bold text-foreground">Atoros.ru</span>
           <span>·</span>
           <span>Deposit4Copyright</span>
         </div>

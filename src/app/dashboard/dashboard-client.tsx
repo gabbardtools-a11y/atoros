@@ -63,10 +63,10 @@ export function DashboardClient({
       {/* Greeting */}
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">
+          <h1 className="text-2xl font-semibold text-foreground">
             Здравствуйте, {user.firstName}
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Личный кабинет депонирования · Atoros.ru
           </p>
         </div>
@@ -99,15 +99,15 @@ export function DashboardClient({
       </div>
 
       {/* Certificates list */}
-      <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-slate-900">Мои свидетельства</h2>
-          <span className="text-xs text-slate-500">{certificates.length} шт.</span>
+      <div className="bg-card border border-border rounded-lg overflow-hidden">
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+          <h2 className="text-base font-semibold text-foreground">Мои свидетельства</h2>
+          <span className="text-xs text-muted-foreground">{certificates.length} шт.</span>
         </div>
         {certificates.length === 0 ? (
           <div className="px-6 py-16 text-center">
-            <FileText className="h-10 w-10 mx-auto text-slate-300 mb-3" />
-            <p className="text-sm text-slate-500 mb-4">У вас пока нет свидетельств</p>
+            <FileText className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" />
+            <p className="text-sm text-muted-foreground mb-4">У вас пока нет свидетельств</p>
             <button
               onClick={() => setShowUpload(true)}
               className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition"
@@ -117,7 +117,7 @@ export function DashboardClient({
             </button>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-border">
             {certificates.map((c) => (
               <CertRow key={c.id} cert={c} />
             ))}
@@ -151,37 +151,37 @@ function StatCard({
   icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-lg p-4">
-      <div className="flex items-center gap-2 text-xs text-slate-500 mb-2">
+    <div className="bg-card border border-border rounded-lg p-4">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
         <Icon className="h-3.5 w-3.5" />
         {label}
       </div>
-      <div className="text-sm font-semibold text-slate-900 truncate">{value}</div>
+      <div className="text-sm font-semibold text-foreground truncate">{value}</div>
     </div>
   );
 }
 
 function CertRow({ cert }: { cert: Cert }) {
   return (
-    <div className="px-6 py-4 flex flex-wrap items-center gap-4 hover:bg-slate-50 transition">
+    <div className="px-6 py-4 flex flex-wrap items-center gap-4 hover:bg-muted transition">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <span className="font-mono text-xs font-semibold text-blue-600">
             № {cert.certNumber}
           </span>
-          <span className="text-[10px] text-slate-400">
+          <span className="text-[10px] text-muted-foreground/70">
             {new Date(cert.createdAt).toLocaleDateString('ru-RU')}
           </span>
         </div>
-        <div className="text-sm font-medium text-slate-900 truncate">{cert.workTitle}</div>
-        <div className="font-mono text-[10px] text-slate-500 truncate mt-0.5">
+        <div className="text-sm font-medium text-foreground truncate">{cert.workTitle}</div>
+        <div className="font-mono text-[10px] text-muted-foreground truncate mt-0.5">
           MD5: {cert.md5Hash.slice(0, 32)}…
         </div>
       </div>
       <div className="flex items-center gap-2">
         <a
           href={`/api/download?id=${cert.id}`}
-          className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 transition"
+          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted transition"
           title="Скачать исходный архив"
         >
           <Download className="h-3.5 w-3.5" />
@@ -256,16 +256,16 @@ function UploadModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        className="bg-card rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between">
           <h3 className="text-base font-semibold">Новое депонирование</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-700 text-xl leading-none">
+          <button onClick={onClose} className="text-muted-foreground/70 hover:text-foreground text-xl leading-none">
             ×
           </button>
         </div>
@@ -273,7 +273,7 @@ function UploadModal({
         <form onSubmit={onSubmit} className="px-6 py-5 space-y-5">
           {/* File dropzone */}
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1.5">
+            <label className="block text-xs font-medium text-foreground mb-1.5">
               Архив с произведением (до 10 МБ)
             </label>
             <div
@@ -286,23 +286,23 @@ function UploadModal({
                   ? 'border-blue-500 bg-blue-50'
                   : file
                   ? 'border-green-400 bg-green-50'
-                  : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50'
+                  : 'border-border hover:border-blue-300 hover:bg-muted'
               }`}
             >
               {file ? (
                 <div>
-                  <div className="text-sm font-medium text-slate-900">{file.name}</div>
-                  <div className="text-xs text-slate-500 mt-1">
+                  <div className="text-sm font-medium text-foreground">{file.name}</div>
+                  <div className="text-xs text-muted-foreground mt-1">
                     {(file.size / 1024 / 1024).toFixed(2)} МБ
                   </div>
                 </div>
               ) : (
                 <div>
-                  <Upload className="h-8 w-8 mx-auto text-slate-400 mb-2" />
-                  <div className="text-sm text-slate-600">
+                  <Upload className="h-8 w-8 mx-auto text-muted-foreground/70 mb-2" />
+                  <div className="text-sm text-muted-foreground">
                     Перетащите архив сюда или нажмите для выбора
                   </div>
-                  <div className="text-xs text-slate-400 mt-1">ZIP, RAR, 7Z · до 10 МБ</div>
+                  <div className="text-xs text-muted-foreground/70 mt-1">ZIP, RAR, 7Z · до 10 МБ</div>
                 </div>
               )}
               <input
@@ -317,7 +317,7 @@ function UploadModal({
 
           {/* Work metadata */}
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1.5">
+            <label className="block text-xs font-medium text-foreground mb-1.5">
               Название произведения*
             </label>
             <input
@@ -325,17 +325,17 @@ function UploadModal({
               value={workTitle}
               onChange={(e) => setWorkTitle(e.target.value)}
               placeholder="Например: «Сборник рассказов о Москве»"
-              className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring"
             />
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1.5">Тип произведения</label>
+              <label className="block text-xs font-medium text-foreground mb-1.5">Тип произведения</label>
               <select
                 value={workType}
                 onChange={(e) => setWorkType(e.target.value)}
-                className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring"
               >
                 {WORK_TYPES.map((t) => (
                   <option key={t.value} value={t.value}>{t.label}</option>
@@ -343,18 +343,18 @@ function UploadModal({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1.5">Соавторы</label>
+              <label className="block text-xs font-medium text-foreground mb-1.5">Соавторы</label>
               <input
                 value={coAuthors}
                 onChange={(e) => setCoAuthors(e.target.value)}
                 placeholder="Иванов И.И., Петров П.П."
-                className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1.5">
+            <label className="block text-xs font-medium text-foreground mb-1.5">
               Краткое описание
             </label>
             <textarea
@@ -362,22 +362,22 @@ function UploadModal({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="1-3 предложения о содержимом архива"
               rows={3}
-              className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"
+              className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring resize-none"
             />
           </div>
 
           {/* Author info preview */}
-          <div className="rounded-md bg-slate-50 border border-slate-100 p-3 text-xs text-slate-600">
-            <div className="font-semibold text-slate-700 mb-1">Автор свидетельства:</div>
+          <div className="rounded-md bg-muted border border-border p-3 text-xs text-muted-foreground">
+            <div className="font-semibold text-foreground mb-1">Автор свидетельства:</div>
             {user.lastName} {user.firstName} {user.middleName ?? ''} · {user.email}
             {user.city && <> · {user.city}</>}
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
+              className="rounded-md border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition"
             >
               Отмена
             </button>

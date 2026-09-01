@@ -56,17 +56,17 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-muted px-4 py-12">
       <div className="w-full max-w-2xl">
-        <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 mb-6 transition">
+        <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition">
           <ArrowLeft className="h-4 w-4" />
           На главную
         </Link>
 
-        <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-8">
+        <div className="bg-card border border-border rounded-lg shadow-sm p-8">
           <div className="mb-6">
-            <h1 className="text-2xl font-semibold text-slate-900">Регистрация</h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <h1 className="text-2xl font-semibold text-foreground">Регистрация</h1>
+            <p className="text-sm text-muted-foreground mt-1">
               Создайте аккаунт для депонирования произведений
             </p>
           </div>
@@ -97,7 +97,7 @@ export default function RegisterPage() {
             </button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-slate-100 text-center text-sm text-slate-500">
+          <div className="mt-6 pt-6 border-t border-border text-center text-sm text-muted-foreground">
             Уже есть аккаунт?{' '}
             <Link href="/auth/login" className="text-blue-600 hover:underline font-medium">
               Войти
@@ -126,14 +126,14 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-slate-700 mb-1.5">{label}</label>
+      <label className="block text-xs font-medium text-foreground mb-1.5">{label}</label>
       <input
         type={type}
         required={required}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+        className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring"
       />
     </div>
   );

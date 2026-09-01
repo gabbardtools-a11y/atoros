@@ -16,7 +16,7 @@ export default function LoginPage() {
 
 function LoginFallback() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+    <div className="min-h-screen flex items-center justify-center bg-muted">
       <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
     </div>
   );
@@ -54,40 +54,40 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-muted px-4">
       <div className="w-full max-w-md">
-        <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 mb-6 transition">
+        <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition">
           <ArrowLeft className="h-4 w-4" />
           На главную
         </Link>
 
-        <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-8">
+        <div className="bg-card border border-border rounded-lg shadow-sm p-8">
           <div className="mb-6">
-            <h1 className="text-2xl font-semibold text-slate-900">Вход</h1>
-            <p className="text-sm text-slate-500 mt-1">Войдите в личный кабинет Atoros</p>
+            <h1 className="text-2xl font-semibold text-foreground">Вход</h1>
+            <p className="text-sm text-muted-foreground mt-1">Войдите в личный кабинет Atoros</p>
           </div>
 
           <form onSubmit={onSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1.5">Email</label>
+              <label className="block text-xs font-medium text-foreground mb-1.5">Email</label>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1.5">Пароль</label>
+              <label className="block text-xs font-medium text-foreground mb-1.5">Пароль</label>
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring"
               />
             </div>
             <button
@@ -100,7 +100,7 @@ function LoginForm() {
             </button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-slate-100 text-center text-sm text-slate-500">
+          <div className="mt-6 pt-6 border-t border-border text-center text-sm text-muted-foreground">
             Нет аккаунта?{' '}
             <Link href="/auth/register" className="text-blue-600 hover:underline font-medium">
               Зарегистрироваться
