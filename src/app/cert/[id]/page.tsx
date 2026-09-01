@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
 import { CertificateView } from './certificate-view';
-import { Eye, FileCheck2, ShieldCheck } from 'lucide-react';
+import { PrintButtons } from './print-buttons';
+import { Eye } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,35 +26,20 @@ export default async function CertPage({ params }: Props) {
   }
   const author = await db.user.findUnique({ where: { id: cert.authorId } });
   return (
-    <main className="min-h-screen bg-slate-50 py-8">
-      <div className="max-w-[210mm] mx-auto px-4">
-        {/* Top bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+    <main className="min-h-screen bg-slate-50 py-8 print:bg-white print:py-0">
+      <div className="max-w-[210mm] mx-auto px-4 print:max-w-none print:px-0">
+        {/* Top bar — hidden when printing */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6 print:hidden">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Eye className="h-4 w-4" />
             <span>Публичная страница свидетельства</span>
           </div>
-          <div className="flex items-center gap-3">
-            <a
-              href={`/cert/${cert.id}/pdf`}
-              className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium hover:bg-slate-50 transition"
-            >
-              <FileCheck2 className="h-3.5 w-3.5" />
-              Скачать PDF
-            </a>
-            <a
-              href={`/api/download?id=${cert.id}`}
-              className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium hover:bg-slate-50 transition"
-            >
-              <ShieldCheck className="h-3.5 w-3.5" />
-              Скачать архив
-            </a>
-          </div>
+          <PrintButtons certId={cert.id} />
         </div>
 
         <CertificateView cert={cert} authorEmail={author?.email ?? cert.authorEmail} />
 
-        <p className="text-center text-xs text-muted-foreground mt-6">
+        <p className="text-center text-xs text-muted-foreground mt-6 print:hidden">
           Свидетельство № {cert.certNumber} · Atoros.ru — Депонирование авторских прав
         </p>
       </div>

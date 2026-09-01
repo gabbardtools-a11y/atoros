@@ -577,28 +577,30 @@ export function CertificateView({
           {/* Download links */}
           <div className="mt-4 pt-3 border-t" style={{ borderColor: 'rgba(15,23,42,0.1)' }}>
             <div className="text-[8px] font-bold tracking-[2.4px] uppercase mb-2" style={{ color: '#1D4ED8' }}>
-              Верифицированная копия файла с депонированной информацией
+              Информация об архивном файле
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <div className="p-2.5 bg-white rounded" style={{ border: '0.5px solid rgba(15,23,42,0.1)', boxShadow: '0 1px 2px rgba(15,23,42,0.03)' }}>
-                <div className="text-[9px] font-bold mb-1" style={{ color: '#1D4ED8' }}>Скачать архив</div>
-                <div className="font-mono text-[7px] text-slate-500 mb-1">{cert.archiveName}</div>
-                <a
-                  href={`/api/download?id=${cert.id}`}
-                  className="text-[8px] font-medium underline"
-                  style={{ color: '#1D4ED8' }}
-                >
-                  Скачать
-                </a>
+                <div className="text-[9px] font-bold mb-1" style={{ color: '#1D4ED8' }}>Имя архива</div>
+                <div className="font-mono text-[8px] text-slate-700 break-all">{cert.archiveName}</div>
               </div>
               <div className="p-2.5 bg-white rounded" style={{ border: '0.5px solid rgba(15,23,42,0.1)', boxShadow: '0 1px 2px rgba(15,23,42,0.03)' }}>
                 <div className="text-[9px] font-bold mb-1" style={{ color: '#1D4ED8' }}>Размер</div>
-                <div className="font-mono text-[7px] text-slate-500">{(cert.archiveSize / 1024 / 1024).toFixed(2)} МБ</div>
+                <div className="font-mono text-[7px] text-slate-500">{(cert.archiveSize / 1024 / 1024).toFixed(2)} МБ ({cert.archiveSize.toLocaleString('ru-RU')} байт)</div>
               </div>
               <div className="p-2.5 bg-white rounded" style={{ border: '0.5px solid rgba(15,23,42,0.1)', boxShadow: '0 1px 2px rgba(15,23,42,0.03)' }}>
                 <div className="text-[9px] font-bold mb-1" style={{ color: '#1D4ED8' }}>Опубликовано</div>
                 <div className="font-mono text-[7px] text-slate-500">{formatDate(cert.createdAt)}</div>
               </div>
+              <div className="p-2.5 bg-white rounded" style={{ border: '0.5px solid rgba(15,23,42,0.1)', boxShadow: '0 1px 2px rgba(15,23,42,0.03)' }}>
+                <div className="text-[9px] font-bold mb-1" style={{ color: '#1D4ED8' }}>Статус</div>
+                <div className="text-[8px] font-medium" style={{ color: '#16a34a' }}>
+                  ● Опубликовано
+                </div>
+              </div>
+            </div>
+            <div className="mt-2 text-[8px] text-slate-500 italic">
+              Архивный файл доступен для скачивания только автору свидетельства из личного кабинета.
             </div>
           </div>
 
