@@ -12,6 +12,7 @@ type Cert = {
   archiveSize: number;
   fileCount: number;
   md5Hash: string;
+  sha256Hash: string | null;
   authorFirstName: string;
   authorLastName: string;
   createdAt: Date;
@@ -27,7 +28,7 @@ const WORK_TYPE_LABELS: Record<string, string> = {
   other: 'Другое',
 };
 
-export function RegistrySearch({ certs }: { certs: Cert[] }) {
+export function RegistryYearSearch({ certs }: { certs: Cert[] }) {
   const [query, setQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
 
