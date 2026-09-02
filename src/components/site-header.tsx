@@ -6,7 +6,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 
 export async function Header({ session }: { session?: any }) {
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-sm">
+    <header className="sticky top-0 z-30 border-b border-border bg-background/40 backdrop-blur-md">
       <div className="max-w-[1400px] mx-auto px-8 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3">
           <Image
@@ -18,8 +18,8 @@ export async function Header({ session }: { session?: any }) {
             className="atoros-logo h-12 w-auto"
           />
           <span className="flex items-baseline gap-2.5">
-            <span className="font-bold text-xl" style={{ color: '#2563EB' }}>
-              Atoros<span style={{ color: '#2563EB' }}>.</span>ru
+            <span className="font-bold text-xl" style={{ color: '#60A5FA' }}>
+              Atoros<span style={{ color: '#60A5FA', fontWeight: 400 }}>.</span><span style={{ fontWeight: 400 }}>ru</span>
             </span>
             <span
               className="text-[10px] font-semibold tracking-wide uppercase hidden sm:inline"
@@ -30,6 +30,9 @@ export async function Header({ session }: { session?: any }) {
           </span>
         </Link>
         <nav className="flex items-center gap-3 text-sm">
+          <Link href="/registry" className="text-muted-foreground hover:text-foreground transition">
+            Реестр свидетельств
+          </Link>
           <ThemeToggle />
           {session?.user ? (
             <>
