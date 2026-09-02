@@ -1,4 +1,4 @@
-// Prisma schema for Atoros.ru Copyright Deposit Service
+// Prisma schema for Atoros — Copyright Deposit Service
 
 generator client {
   provider = "prisma-client-js"
@@ -27,12 +27,8 @@ model User {
 
 model Certificate {
   id            String   @id @default(cuid())
-
-  // Public URL slug: e.g. "1_20260902" (sequence per day + YYYYMMDD)
-  // First cert today = 1_20260902, second = 2_20260902, etc.
-  slug          String   @unique
-
-  // Legacy cert number for display: e.g. "2026-001" (year-seq, kept for backward compat)
+  slug          String   @unique @default(cuid())
+  // Public certificate number: e.g. 2026-001
   certNumber    String   @unique
   certYear      Int
   certSeq       Int
@@ -43,18 +39,17 @@ model Certificate {
   description   String?
   coAuthors     String?  // comma-separated names
 
-  // Archive file info
-  archiveName    String   // e.g. "20260902_1.zip" (YYYYMMDD_N.zip)
-  archiveSize    Int      // bytes
-  archivePath    String   // server path under /uploads
-  fileCount      Int      @default(1) // number of files inside the archive
+  // Archive info (created by service from individual files)
+  archiveName   String   // e.g. "atoros_2026-001.zip"
+  archiveSize   Int      // bytes (final ZIP size)
+  archivePath   String   // server path under /uploads
+  md5Hash       String   // hex MD5 of archive bytes
+  sha256Hash    String?  // hex SHA-256 of archive bytes
+  fileCount     Int      @default(1) // number of files inside archive
 
-  // Hashes of the archive
-  md5Hash        String   // hex MD5 of archive bytes
-  sha256Hash     String   // hex SHA-256 of archive bytes
-
-  // Archive password (auto-generated 12 chars, only visible to author in dashboard)
-  archivePassword String  // plain-text 12-char password, AES-256 encrypted ZIP
+  // Archive password (plain text — user can reveal in dashboard)
+  // In production: should be encrypted at rest; for test mode this is acceptable
+  archivePassword String?
 
   // Author snapshot at moment of deposit (denormalized for certificate stability)
   authorFirstName String
@@ -69,6 +64,9 @@ model Certificate {
   authorId      String
   author        User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
+  // Individual files uploaded by user (before archiving)
+  files         ArchiveFile[]
+
   // Status
   status        String   @default("published") // published | pending | rejected
 
@@ -77,5 +75,19 @@ model Certificate {
 
   @@index([authorId])
   @@index([certYear, certSeq])
-  @@index([slug])
+}
+
+model ArchiveFile {
+  id            String   @id @default(cuid())
+  certificateId String
+  certificate   Certificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+
+  originalName  String   // user's filename
+  storedName    String   // server-side filename (cuid + extension)
+  mimeType      String
+  size          Int      // bytes
+
+  createdAt     DateTime @default(now())
+
+  @@index([certificateId])
 }
