@@ -142,3 +142,29 @@
     linear-gradient(to bottom, var(--iqin-grid-major) 1px, transparent 1px);
   background-size: 3.78px 3.78px, 3.78px 3.78px, 18.9px 18.9px, 18.9px 18.9px;
 }
+
+/* Print / PDF rules — for /cert/[id]/pdf route (Puppeteer page.pdf()) */
+@media print {
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+  /* Each cert page = exactly one A4 sheet */
+  .cert-page {
+    width: 210mm !important;
+    height: 297mm !important;
+    min-height: 297mm !important;
+    page-break-after: always !important;
+    page-break-inside: avoid !important;
+    break-after: page !important;
+    break-inside: avoid !important;
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+  }
+  .cert-page:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+}

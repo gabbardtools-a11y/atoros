@@ -148,8 +148,8 @@ export function CertificateView({
     <>
       {/* ===== PAGE 1: MAIN CERTIFICATE ===== */}
       <div
-        className="relative bg-white shadow-xl border border-slate-200 mb-6"
-        style={{ aspectRatio: '210 / 297', padding: '22mm 22mm 18mm 22mm' }}
+        className="relative bg-white shadow-xl border border-slate-200 mb-6 cert-page"
+        style={{ width: '210mm', minHeight: '297mm', padding: '22mm 22mm 18mm 22mm', boxSizing: 'border-box' }}
       >
         {/* Millimeter grid background */}
         <svg
@@ -408,8 +408,8 @@ export function CertificateView({
 
       {/* ===== PAGE 2: TECHNICAL VERIFICATION ===== */}
       <div
-        className="relative bg-white shadow-xl border border-slate-200"
-        style={{ aspectRatio: '210 / 297', padding: '22mm 22mm 18mm 22mm' }}
+        className="relative bg-white shadow-xl border border-slate-200 cert-page"
+        style={{ width: '210mm', minHeight: '297mm', padding: '22mm 22mm 18mm 22mm', boxSizing: 'border-box' }}
       >
         {/* Millimeter grid */}
         <svg
