@@ -143,6 +143,39 @@
   background-size: 3.78px 3.78px, 3.78px 3.78px, 18.9px 18.9px, 18.9px 18.9px;
 }
 
+/* === Print mode: cert pages === */
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+  html, body {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  /* Each certificate page = one A4 sheet */
+  [data-cert-page], .cert-page {
+    width: 210mm !important;
+    height: 297mm !important;
+    aspect-ratio: auto !important;
+    page-break-after: always !important;
+    page-break-inside: avoid !important;
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    display: block !important;
+  }
+  [data-cert-page]:last-child, .cert-page:last-child {
+    page-break-after: auto !important;
+  }
+  /* Hide everything except the print-mode main */
+  body:not(.print-mode) > *:not(#atoros-print-root) {
+    /* default — no change */
+  }
+}
+
 /* Print / PDF rules — for /cert/[id]/pdf route (Puppeteer page.pdf()) */
 @media print {
   html, body {
