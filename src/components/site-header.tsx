@@ -48,7 +48,7 @@ export async function Header({ session }: { session?: any }) {
             </>
           ) : (
             <>
-              <Link href="/auth/login" className="text-muted-foreground hover:text-foreground transition">
+              <Link href="/auth/login" className="font-medium text-blue-700 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition">
                 Войти
               </Link>
               <Link
