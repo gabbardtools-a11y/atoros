@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { authOptions } from '@/lib/auth';
 import { getServerSession } from 'next-auth';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -6,16 +7,26 @@ import { ThemeToggle } from '@/components/theme-toggle';
 export async function Header({ session }: { session?: any }) {
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-sm">
-      <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-        <Link href="/" className="flex items-baseline gap-2">
-          <span className="font-bold text-lg" style={{ color: '#2563EB' }}>
-            Atoros<span style={{ color: '#2563EB' }}>.</span>ru
-          </span>
-          <span
-            className="text-[9px] font-semibold tracking-wide uppercase hidden sm:inline"
-            style={{ color: '#B08A3E', borderLeft: '1px solid rgba(176,138,62,0.35)', paddingLeft: '8px', marginLeft: '2px' }}
-          >
-            Deposit<span style={{ color: '#2563EB', fontWeight: 700 }}>4</span>Copyright
+      <div className="max-w-[1400px] mx-auto px-8 h-16 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-3">
+          <Image
+            src="/logo-atoros.png"
+            alt="Atoros"
+            width={56}
+            height={70}
+            priority
+            className="atoros-logo h-12 w-auto"
+          />
+          <span className="flex items-baseline gap-2.5">
+            <span className="font-bold text-xl" style={{ color: '#2563EB' }}>
+              Atoros<span style={{ color: '#2563EB' }}>.</span>ru
+            </span>
+            <span
+              className="text-[10px] font-semibold tracking-wide uppercase hidden sm:inline"
+              style={{ color: '#B08A3E', borderLeft: '1px solid rgba(176,138,62,0.35)', paddingLeft: '10px', marginLeft: '2px' }}
+            >
+              Deposit<span style={{ color: '#2563EB', fontWeight: 700 }}>4</span>Copyright
+            </span>
           </span>
         </Link>
         <nav className="flex items-center gap-3 text-sm">

@@ -13,14 +13,15 @@ export function ThemeToggle() {
     setMounted(true);
   }, []);
 
-  const isDark = theme === 'dark';
+  // Use resolved theme only after mount to avoid hydration mismatch
+  const isDark = mounted && theme === 'dark';
 
   return (
     <button
       type="button"
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
-      aria-label={isDark ? 'Переключить на светлую тему' : 'Переключить на тёмную тему'}
-      title={isDark ? 'Светлая тема' : 'Тёмная тема'}
+      aria-label="Переключить тему"
+      title="Переключить тему"
       className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-foreground transition hover:bg-muted"
     >
       {mounted ? (
@@ -30,6 +31,7 @@ export function ThemeToggle() {
           <Moon className="h-4 w-4" />
         )
       ) : (
+        // Static placeholder before mount — same on server and client
         <Moon className="h-4 w-4 opacity-0" />
       )}
     </button>

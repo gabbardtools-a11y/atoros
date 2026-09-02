@@ -4,7 +4,7 @@ import { ShieldCheck, FileCheck2, Fingerprint, Upload, ArrowRight, CheckCircle2 
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { Header } from '@/components/site-header';
-import { HeroAnimation } from '@/components/hero-animation';
+import { HeroWithControls } from '@/components/hero-with-controls';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,14 +25,14 @@ export default async function Home() {
     <div className="min-h-screen flex flex-col bg-background">
       <Header session={session} />
 
-      {/* Hero */}
-      <section className="relative overflow-hidden border-b border-border min-h-[600px]">
-        {/* Three.js hero animation — tetrahedron with simplex noise */}
-        <HeroAnimation />
+      {/* Hero — full-bleed animation background + text overlay */}
+      <section className="relative overflow-hidden border-b border-border min-h-[640px]">
+        {/* Three.js hero animation — full block background */}
+        <HeroWithControls />
 
         {/* Millimeter grid background (subtle, on top of animation) */}
         <div
-          className="absolute inset-0 pointer-events-none opacity-30"
+          className="absolute inset-0 pointer-events-none opacity-20"
           style={{
             backgroundImage:
               'linear-gradient(to right, rgba(158,201,242,0.4) 0.5px, transparent 0.5px), linear-gradient(to bottom, rgba(158,201,242,0.4) 0.5px, transparent 0.5px), linear-gradient(to right, rgba(135,187,240,0.8) 1px, transparent 1px), linear-gradient(to bottom, rgba(135,187,240,0.8) 1px, transparent 1px)',
@@ -40,26 +40,27 @@ export default async function Home() {
           }}
         />
 
+        {/* Text content overlay */}
         <div className="relative z-10 max-w-6xl mx-auto px-6 py-20 md:py-28">
-          <div className="text-center max-w-3xl mx-auto">
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary mb-6">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary mb-6 backdrop-blur-sm">
               <ShieldCheck className="h-3.5 w-3.5" />
               Тестовый режим · архивы до 10 МБ · хеш MD5
             </div>
 
-            <h1 className="text-4xl md:text-6xl font-light tracking-tight text-foreground mb-6">
-              Депонирование <span className="text-primary font-semibold">авторских прав</span>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-light tracking-tight text-foreground mb-6">
+              Депонирование <span className="text-foreground font-light">информации</span>
               <br />
-              за 60 секунд
+              для подтверждения <span className="text-primary font-semibold">авторских прав и ноу-хау</span>
             </h1>
 
-            <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-base md:text-lg text-muted-foreground mb-8 leading-relaxed max-w-xl">
               Загрузите архив с произведением — мы вычислим его уникальный цифровой отпечаток
               (хеш-сумму MD5) и опубликуем свидетельство о депонировании с уникальным номером.
               Подтверждение авторства в любой момент через онлайн-верификацию.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-10">
+            <div className="flex flex-col sm:flex-row items-start gap-3 mb-10">
               {session?.user ? (
                 <Link
                   href="/dashboard"
@@ -79,7 +80,7 @@ export default async function Home() {
                   </Link>
                   <Link
                     href="/auth/login"
-                    className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-6 py-3 text-sm font-semibold text-foreground hover:bg-muted transition"
+                    className="inline-flex items-center gap-2 rounded-md border border-border bg-background/80 backdrop-blur-sm px-6 py-3 text-sm font-semibold text-foreground hover:bg-muted transition"
                   >
                     Войти
                   </Link>
@@ -87,7 +88,7 @@ export default async function Home() {
               )}
             </div>
 
-            <div className="flex items-center justify-center gap-6 text-xs text-muted-foreground">
+            <div className="flex flex-wrap items-start gap-x-6 gap-y-2 text-xs text-muted-foreground">
               <div className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
                 Без бумажной почты

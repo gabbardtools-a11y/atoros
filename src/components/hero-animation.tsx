@@ -1,17 +1,26 @@
 'use client';
 import { useEffect, useRef } from 'react';
+import type { HeroConfig } from './hero-controls';
 
 /**
- * Hero animation — tetrahedron with simplex-noise deformation + Fresnel rim glow.
- * Port of https://litter.catbox.moe/t42kfh.html to React.
- * Uses Three.js (loaded via CDN importmap for compatibility).
+ * Hero animation v4 — tetrahedron with:
+ * - Simplex-noise vertex deformation
+ * - Vertex attraction to cursor
+ * - Face flash on cursor hover
+ * - Fresnel rim glow
+ * Configurable via `config` prop (controlled by HeroControls panel).
  */
 
 const VERTEX_SHADER = `
   uniform float time;
   uniform float displacement;
+  uniform vec3  mouseLocal;
+  uniform float mouseActive;
+  uniform float attractionRadius;
+  uniform float attractionStrength;
   varying vec3 vNormal;
   varying vec3 vPosition;
+  varying vec2 vNdc;
 
   vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
   vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -66,15 +75,33 @@ const VERTEX_SHADER = `
     vPosition = position;
     float disp = snoise(position * 1.5 + time * 0.4) * displacement;
     vec3 newPosition = position + normal * disp;
+
+    if (mouseActive > 0.001) {
+      float dist = distance(newPosition, mouseLocal);
+      if (dist < attractionRadius) {
+        float falloff = 1.0 - (dist / attractionRadius);
+        falloff = pow(falloff, 2.0);
+        vec3 toMouse = mouseLocal - newPosition;
+        newPosition += toMouse * falloff * attractionStrength * mouseActive;
+      }
+    }
+
     gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
+    vNdc = gl_Position.xy / gl_Position.w;
   }
 `;
 
 const FRAGMENT_SHADER = `
   uniform vec3 color;
   uniform vec3 pointLightPos;
+  uniform vec2  mouseNdc;
+  uniform float mouseActive;
+  uniform float flashRadius;
+  uniform float flashIntensity;
+  uniform vec3  flashColor;
   varying vec3 vNormal;
   varying vec3 vPosition;
+  varying vec2 vNdc;
 
   void main() {
     vec3 normal = normalize(vNormal);
@@ -82,45 +109,62 @@ const FRAGMENT_SHADER = `
     float diffuse = max(dot(normal, lightDir), 0.0);
     float fresnel = 1.0 - max(dot(normal, vec3(0.0, 0.0, 1.0)), 0.0);
     fresnel = pow(fresnel, 2.2);
-    vec3 finalColor = color * (diffuse * 0.7 + 0.3) + vec3(0.38, 0.82, 1.0) * fresnel * 0.9;
+
+    vec3 baseColor = color * (diffuse * 0.7 + 0.3) + vec3(0.38, 0.82, 1.0) * fresnel * 0.9;
+
+    float flash = 0.0;
+    if (mouseActive > 0.001) {
+      vec2 d = vNdc - mouseNdc;
+      float dist = length(d);
+      if (dist < flashRadius) {
+        float falloff = 1.0 - (dist / flashRadius);
+        falloff = pow(falloff, 1.5);
+        flash = falloff * flashIntensity * mouseActive;
+      }
+    }
+
+    vec3 finalColor = baseColor + flashColor * flash * 1.5;
     gl_FragColor = vec4(finalColor, 0.85);
   }
 `;
 
-export function HeroAnimation() {
+function createGeometry(THREE: any, shape: string, detail: number) {
+  const r = 1.25;
+  const d = Math.max(0, Math.min(detail, 8));
+  switch (shape) {
+    case 'tetrahedron': return new THREE.TetrahedronGeometry(r * 1.3, d);
+    case 'icosahedron': return new THREE.IcosahedronGeometry(r, d);
+    case 'octahedron': return new THREE.OctahedronGeometry(r * 1.1, d);
+    case 'dodecahedron': return new THREE.DodecahedronGeometry(r, d);
+    case 'box':
+      return new THREE.BoxGeometry(r * 1.5, r * 1.5, r * 1.5,
+        Math.max(1, d * 4), Math.max(1, d * 4), Math.max(1, d * 4));
+    case 'sphere':
+      return new THREE.SphereGeometry(r, Math.max(8, d * 8 + 16), Math.max(8, d * 8 + 16));
+    case 'torus-knot':
+      return new THREE.TorusKnotGeometry(r * 0.75, r * 0.25,
+        Math.max(64, d * 32 + 64), Math.max(8, d * 4 + 12));
+    default: return new THREE.IcosahedronGeometry(r, d);
+  }
+}
+
+export function HeroAnimation({ config }: { config: HeroConfig }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  // Keep a ref to the latest config so the animation loop reads fresh values
+  const configRef = useRef(config);
+  configRef.current = config;
+  // Refs to Three.js objects we need to mutate when config changes
+  const sceneRef = useRef<any>(null);
 
   useEffect(() => {
     let cleanup = () => {};
 
-    // Load Three.js dynamically (client-only)
     import('three')
       .then((THREE) => {
         const canvas = canvasRef.current;
         const container = containerRef.current;
         if (!canvas || !container) return;
-
-        const CONFIG = {
-          shape: 'tetrahedron',
-          detail: 0,
-          speed: 0.25,
-          displacement: 0.3,
-          wireframe: true,
-          color: '#38bdf8',
-        };
-
-        function createGeometry(shape: string, detail: number) {
-          const r = 1.25;
-          const d = Math.max(0, Math.min(detail, 8));
-          switch (shape) {
-            case 'tetrahedron': return new THREE.TetrahedronGeometry(r * 1.3, d);
-            case 'icosahedron': return new THREE.IcosahedronGeometry(r, d);
-            case 'octahedron': return new THREE.OctahedronGeometry(r * 1.1, d);
-            case 'dodecahedron': return new THREE.DodecahedronGeometry(r, d);
-            default: return new THREE.IcosahedronGeometry(r, d);
-          }
-        }
 
         const width = container.clientWidth || window.innerWidth;
         const height = container.clientHeight || window.innerHeight;
@@ -139,38 +183,93 @@ export function HeroAnimation() {
         renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
         renderer.setClearColor(0x000000, 0);
 
-        const geometry = createGeometry(CONFIG.shape, CONFIG.detail);
-        const material = new THREE.ShaderMaterial({
-          uniforms: {
-            time: { value: 0 },
-            pointLightPos: { value: new THREE.Vector3(0, 0, 4) },
-            color: { value: new THREE.Color(CONFIG.color) },
-            displacement: { value: CONFIG.displacement },
-          },
-          vertexShader: VERTEX_SHADER,
-          fragmentShader: FRAGMENT_SHADER,
-          wireframe: CONFIG.wireframe,
-          transparent: true,
-        });
-
-        const mesh = new THREE.Mesh(geometry, material);
-        scene.add(mesh);
-
         const pointLight = new THREE.PointLight(0xffffff, 2, 50);
         pointLight.position.set(0, 0, 4);
         scene.add(pointLight);
 
+        const initialConfig = configRef.current;
+        let geometry = createGeometry(THREE, initialConfig.shape, initialConfig.detail);
+        const material = new THREE.ShaderMaterial({
+          uniforms: {
+            time: { value: 0 },
+            pointLightPos: { value: new THREE.Vector3(0, 0, 4) },
+            color: { value: new THREE.Color('#38bdf8') },
+            displacement: { value: initialConfig.displacement },
+            mouseLocal: { value: new THREE.Vector3(0, 0, 4) },
+            mouseNdc: { value: new THREE.Vector2(0, 0) },
+            mouseActive: { value: 0 },
+            attractionRadius: { value: initialConfig.attractionRadius },
+            attractionStrength: { value: initialConfig.attractionStrength },
+            flashRadius: { value: initialConfig.flashRadius },
+            flashIntensity: { value: initialConfig.flashIntensity },
+            flashColor: { value: new THREE.Color(initialConfig.flashColor) },
+          },
+          vertexShader: VERTEX_SHADER,
+          fragmentShader: FRAGMENT_SHADER,
+          wireframe: initialConfig.wireframe,
+          transparent: true,
+        });
+
+        let mesh = new THREE.Mesh(geometry, material);
+        scene.add(mesh);
+        sceneRef.current = { THREE, mesh, material, scene, renderer };
+
+        // Mouse tracking
+        const mousePosWorld = new THREE.Vector3(0, 0, 4);
+        const mouseNdc = new THREE.Vector2(0, 0);
+        let mouseActiveTarget = 0;
+        let mouseActiveCurrent = 0;
+
+        const onMouseMove = (e: MouseEvent) => {
+          mouseNdc.set(
+            (e.clientX / window.innerWidth) * 2 - 1,
+            -(e.clientY / window.innerHeight) * 2 + 1,
+          );
+          material.uniforms.mouseNdc.value.copy(mouseNdc);
+
+          const v = new THREE.Vector3(mouseNdc.x, mouseNdc.y, 0.5)
+            .unproject(camera)
+            .sub(camera.position)
+            .normalize();
+          const dist = -camera.position.z / (v.z || -1);
+          const pos = camera.position.clone().add(v.multiplyScalar(dist));
+          mousePosWorld.copy(pos);
+          pointLight.position.copy(pos);
+          material.uniforms.pointLightPos.value.copy(pos);
+          const c = configRef.current;
+          if (c.attractionEnabled || c.flashEnabled) mouseActiveTarget = 1;
+        };
+
+        const onMouseLeave = () => { mouseActiveTarget = 0; };
+
+        window.addEventListener('mousemove', onMouseMove, { passive: true });
+        document.addEventListener('mouseleave', onMouseLeave);
+        document.body.addEventListener('mouseleave', onMouseLeave);
+
+        // Animation loop
         let animId: number;
         const animate = (e: number) => {
-          const s = CONFIG.speed;
+          const c = configRef.current;
+          const s = c.speed;
           material.uniforms.time.value = e * 4e-4 * s;
           mesh.rotation.y += 8e-4 * s;
           mesh.rotation.x += 4e-4 * s;
+
+          mesh.updateMatrixWorld();
+          const localPos = mousePosWorld.clone();
+          mesh.worldToLocal(localPos);
+          material.uniforms.mouseLocal.value.copy(localPos);
+
+          if (!c.attractionEnabled && !c.flashEnabled) mouseActiveTarget = 0;
+          mouseActiveCurrent += (mouseActiveTarget - mouseActiveCurrent) * 0.1;
+          material.uniforms.mouseActive.value = mouseActiveCurrent;
+
           renderer.render(scene, camera);
           animId = requestAnimationFrame(animate);
         };
         animate(0);
 
+        // Resize
         const onResize = () => {
           if (!container) return;
           const w = container.clientWidth || window.innerWidth;
@@ -181,26 +280,12 @@ export function HeroAnimation() {
         };
         window.addEventListener('resize', onResize);
 
-        const onMouseMove = (e: MouseEvent) => {
-          const v = new THREE.Vector3(
-            (e.clientX / window.innerWidth) * 2 - 1,
-            -(e.clientY / window.innerHeight) * 2 + 1,
-            0.5,
-          )
-            .unproject(camera)
-            .sub(camera.position)
-            .normalize();
-          const dist = -camera.position.z / (v.z || -1);
-          const pos = camera.position.clone().add(v.multiplyScalar(dist));
-          pointLight.position.copy(pos);
-          material.uniforms.pointLightPos.value.copy(pos);
-        };
-        window.addEventListener('mousemove', onMouseMove, { passive: true });
-
         cleanup = () => {
           cancelAnimationFrame(animId);
           window.removeEventListener('resize', onResize);
           window.removeEventListener('mousemove', onMouseMove);
+          document.removeEventListener('mouseleave', onMouseLeave);
+          document.body.removeEventListener('mouseleave', onMouseLeave);
           geometry.dispose();
           material.dispose();
           renderer.dispose();
@@ -210,6 +295,37 @@ export function HeroAnimation() {
 
     return () => cleanup();
   }, []);
+
+  // Apply config changes to the running scene
+  useEffect(() => {
+    const sceneState = sceneRef.current;
+    if (!sceneState) return;
+    const { THREE, mesh, material } = sceneState;
+
+    // Rebuild geometry if shape or detail changed
+    const newGeometry = createGeometry(THREE, config.shape, config.detail);
+    mesh.geometry.dispose();
+    mesh.geometry = newGeometry;
+
+    // Update uniforms
+    material.uniforms.displacement.value = config.displacement;
+    material.uniforms.attractionRadius.value = config.attractionRadius;
+    material.uniforms.attractionStrength.value = config.attractionStrength;
+    material.uniforms.flashRadius.value = config.flashRadius;
+    material.uniforms.flashIntensity.value = config.flashIntensity;
+    material.uniforms.flashColor.value = new THREE.Color(config.flashColor);
+    material.wireframe = config.wireframe;
+  }, [
+    config.shape,
+    config.detail,
+    config.displacement,
+    config.attractionRadius,
+    config.attractionStrength,
+    config.flashRadius,
+    config.flashIntensity,
+    config.flashColor,
+    config.wireframe,
+  ]);
 
   return (
     <div
