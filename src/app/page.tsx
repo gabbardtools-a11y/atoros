@@ -4,6 +4,7 @@ import { ShieldCheck, FileCheck2, Fingerprint, Upload, ArrowRight, CheckCircle2 
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { Header } from '@/components/site-header';
+import { HeroAnimation } from '@/components/hero-animation';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,10 +26,13 @@ export default async function Home() {
       <Header session={session} />
 
       {/* Hero */}
-      <section className="relative overflow-hidden border-b border-border">
-        {/* Millimeter grid background */}
+      <section className="relative overflow-hidden border-b border-border min-h-[600px]">
+        {/* Three.js hero animation — tetrahedron with simplex noise */}
+        <HeroAnimation />
+
+        {/* Millimeter grid background (subtle, on top of animation) */}
         <div
-          className="absolute inset-0 pointer-events-none opacity-50"
+          className="absolute inset-0 pointer-events-none opacity-30"
           style={{
             backgroundImage:
               'linear-gradient(to right, rgba(158,201,242,0.4) 0.5px, transparent 0.5px), linear-gradient(to bottom, rgba(158,201,242,0.4) 0.5px, transparent 0.5px), linear-gradient(to right, rgba(135,187,240,0.8) 1px, transparent 1px), linear-gradient(to bottom, rgba(135,187,240,0.8) 1px, transparent 1px)',
@@ -36,7 +40,7 @@ export default async function Home() {
           }}
         />
 
-        <div className="relative max-w-6xl mx-auto px-6 py-20 md:py-28">
+        <div className="relative z-10 max-w-6xl mx-auto px-6 py-20 md:py-28">
           <div className="text-center max-w-3xl mx-auto">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary mb-6">
               <ShieldCheck className="h-3.5 w-3.5" />
