@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
-import { ShieldCheck, FileCheck2, Fingerprint, Upload, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, FileCheck2, Fingerprint, Upload, ArrowRight, CheckCircle2, FileText } from 'lucide-react';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { Header } from '@/components/site-header';
@@ -60,7 +60,7 @@ export default async function Home() {
               Подтверждение авторства в любой момент через онлайн-верификацию.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-start gap-3 mb-10">
+            <div className="flex flex-col sm:flex-row items-start gap-3 mb-6">
               {session?.user ? (
                 <Link
                   href="/dashboard"
@@ -86,6 +86,19 @@ export default async function Home() {
                   </Link>
                 </>
               )}
+            </div>
+
+            {/* Sample certificate button */}
+            <div className="mb-10">
+              <a
+                href="/sample-certificate.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-md border border-primary/30 bg-primary/10 backdrop-blur-sm px-5 py-2.5 text-sm font-medium text-primary hover:bg-primary/20 transition"
+              >
+                <FileText className="h-4 w-4" />
+                Посмотреть образец свидетельства
+              </a>
             </div>
 
             <div className="flex flex-wrap items-start gap-x-6 gap-y-2 text-xs text-slate-700 dark:text-white/80">
