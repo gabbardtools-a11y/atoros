@@ -309,7 +309,7 @@ export function CertificateView({
                 <div className="text-xs" style={{ color: '#0B1220' }}>
                   <span style={{ color: '#B08A3E', fontWeight: 600 }}>{formatDate(cert.createdAt)}</span>
                   <br />
-                  Архивный файл: <span className="font-mono text-[11px]">{cert.archiveName}</span>
+                  Архивный файл создан и опечатан
                 </div>
               </div>
             </div>
@@ -332,37 +332,24 @@ export function CertificateView({
               </div>
             </div>
 
-            {/* MD5 hash — prominent block */}
+            {/* Deposit info block — no hash, just status */}
             <div
               className="p-3.5"
               style={{
-                background: 'linear-gradient(135deg, rgba(37,99,235,0.04), rgba(37,99,235,0.01))',
-                border: '0.5px solid rgba(37,99,235,0.18)',
-                borderLeft: '2.5px solid #2563EB',
+                background: 'linear-gradient(135deg, rgba(176,138,62,0.05), rgba(37,99,235,0.02))',
+                border: '0.5px solid rgba(15,23,42,0.1)',
+                borderLeft: '2.5px solid #B08A3E',
                 borderRadius: '2px',
               }}
             >
               <div className="flex justify-between items-baseline mb-2">
                 <div className="text-[10px] font-bold" style={{ color: '#0B1220' }}>
-                  MD5 <span className="text-[8.5px] font-medium" style={{ color: '#1D4ED8' }}>· RFC 1321 · хеш-сумма архивного файла</span>
+                  Сведения о депонировании <span className="text-[8.5px] font-medium" style={{ color: '#1D4ED8' }}>· архив опечатан AES-256</span>
                 </div>
-                <div className="font-mono text-[8px] text-slate-400">/ 01</div>
+                <div className="font-mono text-[8px] text-slate-400">{cert.slug}</div>
               </div>
-              <div
-                className="font-mono text-[10px] leading-relaxed px-2 py-1.5 rounded"
-                style={{
-                  color: '#1D4ED8',
-                  background: 'rgba(37,99,235,0.05)',
-                  border: '0.5px solid rgba(37,99,235,0.18)',
-                  wordBreak: 'break-all',
-                  letterSpacing: '0.5px',
-                }}
-              >
-                {cert.md5Hash}
-              </div>
-              <div className="font-mono text-[7px] text-slate-400 mt-1.5">
-                <span className="uppercase tracking-wider text-slate-500 mr-1">Программа:</span>
-                emn178.github.io/online-tools/md5_checksum.html
+              <div className="text-[11px] leading-relaxed text-slate-700">
+                Произведение депонировано в защищённом архиве. Хеш-суммы (MD5, SHA-256) доступны на странице технической верификации (стр. 2) и в личном кабинете автора. Доступ к содержимому архива имеет только автор свидетельства.
               </div>
             </div>
           </div>
@@ -401,7 +388,7 @@ export function CertificateView({
 
           {/* Footer microtext */}
           <div className="font-mono text-[7px] text-slate-400 text-center mt-3 overflow-hidden whitespace-nowrap opacity-70">
-            {cert.certNumber} · ООО ПАТЕНТНЫЕ ТЕХНОЛОГИИ · ИНН 7716687757 · ОГРН 1117746321296 · MD5 {cert.md5Hash.slice(0, 16)}… · {formatDateTime(cert.createdAt)} · {cert.certNumber} · ООО ПАТЕНТНЫЕ ТЕХНОЛОГИИ
+            {cert.certNumber} · ООО ПАТЕНТНЫЕ ТЕХНОЛОГИИ · ИНН 7716687757 · ОГРН 1117746321296 · {formatDateTime(cert.createdAt)} · {cert.certNumber} · ООО ПАТЕНТНЫЕ ТЕХНОЛОГИИ
           </div>
         </div>
       </div>
@@ -485,7 +472,7 @@ export function CertificateView({
             }}
           >
             <strong style={{ color: '#0B1220' }}>Все объекты авторского права</strong> по настоящему свидетельству помещены в архивный файл{' '}
-            <strong>«{cert.archiveName}»</strong>, для которого с целью верификации вычислена хеш-сумма (уникальный цифровой отпечаток файла) по алгоритму MD5.
+            <strong>опечатанному архивному файлу</strong>, для которого с целью верификации вычислены хеш-суммы (уникальные цифровые отпечатки файла) по алгоритмам MD5 и SHA-256.
             Содержимое файла не подлежит изменению; изменение файла недоступно автору(ам). В случае изменения содержимого архивного файла автоматически изменятся дата публикации и его хеш-сумма.
           </div>
 
@@ -523,6 +510,29 @@ export function CertificateView({
                 <span className="uppercase tracking-wider text-slate-500 mr-1">Веб-интерфейс:</span>
                 emn178.github.io/online-tools/md5_checksum.html
               </div>
+
+              {/* SHA-256 hash block */}
+              <div className="flex justify-between items-baseline mb-2 mt-3">
+                <div className="text-[11px] font-bold" style={{ color: '#0B1220' }}>
+                  SHA-256 <span className="text-[8.5px] font-medium" style={{ color: '#1D4ED8' }}>· FIPS 180-4</span>
+                </div>
+                <div className="font-mono text-[8px] text-slate-400">/ 02</div>
+              </div>
+              <div
+                className="font-mono text-[8.5px] leading-relaxed px-2 py-1.5 rounded"
+                style={{
+                  color: '#1D4ED8',
+                  background: 'rgba(37,99,235,0.05)',
+                  border: '0.5px solid rgba(37,99,235,0.18)',
+                  wordBreak: 'break-all',
+                }}
+              >
+                {cert.sha256Hash}
+              </div>
+              <div className="font-mono text-[7px] text-slate-400 mt-1.5">
+                <span className="uppercase tracking-wider text-slate-500 mr-1">Веб-интерфейс:</span>
+                emn178.github.io/online-tools/sha256_checksum.html
+              </div>
             </div>
 
             {/* QR verification panel */}
@@ -553,7 +563,7 @@ export function CertificateView({
                 }}
               >
                 <img
-                  src={`/api/qrcode?data=${encodeURIComponent(`https://atoros.ru/cert/${cert.id}`)}`}
+                  src={`/api/qrcode?data=${encodeURIComponent(`https://atoros.ru/cert/${cert.slug}`)}`}
                   alt="QR код"
                   style={{ width: '100%', height: '100%' }}
                 />
@@ -569,25 +579,17 @@ export function CertificateView({
                   textAlign: 'center',
                 }}
               >
-                atoros.ru/cert/{cert.id.slice(-8)}
+                atoros.ru/cert/{cert.slug}
               </div>
             </div>
           </div>
 
-          {/* Download links */}
+          {/* Verification info */}
           <div className="mt-4 pt-3 border-t" style={{ borderColor: 'rgba(15,23,42,0.1)' }}>
             <div className="text-[8px] font-bold tracking-[2.4px] uppercase mb-2" style={{ color: '#1D4ED8' }}>
-              Информация об архивном файле
+              Сведения о депонировании
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="p-2.5 bg-white rounded" style={{ border: '0.5px solid rgba(15,23,42,0.1)', boxShadow: '0 1px 2px rgba(15,23,42,0.03)' }}>
-                <div className="text-[9px] font-bold mb-1" style={{ color: '#1D4ED8' }}>Имя архива</div>
-                <div className="font-mono text-[8px] text-slate-700 break-all">{cert.archiveName}</div>
-              </div>
-              <div className="p-2.5 bg-white rounded" style={{ border: '0.5px solid rgba(15,23,42,0.1)', boxShadow: '0 1px 2px rgba(15,23,42,0.03)' }}>
-                <div className="text-[9px] font-bold mb-1" style={{ color: '#1D4ED8' }}>Размер</div>
-                <div className="font-mono text-[7px] text-slate-500">{(cert.archiveSize / 1024 / 1024).toFixed(2)} МБ ({cert.archiveSize.toLocaleString('ru-RU')} байт)</div>
-              </div>
+            <div className="grid grid-cols-3 gap-2">
               <div className="p-2.5 bg-white rounded" style={{ border: '0.5px solid rgba(15,23,42,0.1)', boxShadow: '0 1px 2px rgba(15,23,42,0.03)' }}>
                 <div className="text-[9px] font-bold mb-1" style={{ color: '#1D4ED8' }}>Опубликовано</div>
                 <div className="font-mono text-[7px] text-slate-500">{formatDate(cert.createdAt)}</div>
@@ -598,9 +600,13 @@ export function CertificateView({
                   ● Опубликовано
                 </div>
               </div>
+              <div className="p-2.5 bg-white rounded" style={{ border: '0.5px solid rgba(15,23,42,0.1)', boxShadow: '0 1px 2px rgba(15,23,42,0.03)' }}>
+                <div className="text-[9px] font-bold mb-1" style={{ color: '#1D4ED8' }}>Архив</div>
+                <div className="text-[8px] text-slate-600">Опечатан · AES-256</div>
+              </div>
             </div>
             <div className="mt-2 text-[8px] text-slate-500 italic">
-              Архивный файл доступен для скачивания только автору свидетельства из личного кабинета.
+              Архивный файл защищён паролем и хранится на сервере. Доступ к архиву имеет только автор свидетельства.
             </div>
           </div>
 

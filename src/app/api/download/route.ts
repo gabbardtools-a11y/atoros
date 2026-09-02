@@ -9,10 +9,16 @@ export async function GET(req: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 });
     }
+    const slug = req.nextUrl.searchParams.get('slug');
     const id = req.nextUrl.searchParams.get('id');
-    if (!id) return NextResponse.json({ error: 'id обязателен' }, { status: 400 });
+    if (!slug && !id) {
+      return NextResponse.json({ error: 'slug или id обязателен' }, { status: 400 });
+    }
 
-    const cert = await db.certificate.findUnique({ where: { id } });
+    const cert = slug
+      ? await db.certificate.findUnique({ where: { slug } })
+      : await db.certificate.findUnique({ where: { id: id! } });
+
     if (!cert) return NextResponse.json({ error: 'Не найдено' }, { status: 404 });
     if (cert.authorId !== user.id) {
       return NextResponse.json({ error: 'Доступ запрещён' }, { status: 403 });
@@ -21,7 +27,7 @@ export async function GET(req: NextRequest) {
     const buffer = await readFile(cert.archivePath);
     return new NextResponse(buffer, {
       headers: {
-        'Content-Type': 'application/octet-stream',
+        'Content-Type': 'application/zip',
         'Content-Disposition': `attachment; filename="${cert.archiveName}"`,
         'Content-Length': String(buffer.length),
       },

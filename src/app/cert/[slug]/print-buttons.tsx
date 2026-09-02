@@ -2,14 +2,14 @@
 import { Printer, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 
-export function PrintButtons({ certId }: { certId: string }) {
+export function PrintButtons({ certSlug }: { certSlug: string }) {
   const [loading, setLoading] = useState(false);
 
   const handlePrint = async () => {
     setLoading(true);
     try {
       // Open the print-mode version in a new window
-      const printUrl = `/cert/${certId}?print=true`;
+      const printUrl = `/cert/${certSlug}?print=true`;
       const printWindow = window.open(printUrl, '_blank', 'width=1024,height=720');
 
       if (!printWindow) {

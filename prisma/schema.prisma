@@ -1,4 +1,4 @@
-// Prisma schema for IQIN Copyright Deposit Service
+// Prisma schema for Atoros.ru Copyright Deposit Service
 
 generator client {
   provider = "prisma-client-js"
@@ -27,7 +27,12 @@ model User {
 
 model Certificate {
   id            String   @id @default(cuid())
-  // Public certificate number: e.g. 2025-001
+
+  // Public URL slug: e.g. "1_20260902" (sequence per day + YYYYMMDD)
+  // First cert today = 1_20260902, second = 2_20260902, etc.
+  slug          String   @unique
+
+  // Legacy cert number for display: e.g. "2026-001" (year-seq, kept for backward compat)
   certNumber    String   @unique
   certYear      Int
   certSeq       Int
@@ -39,10 +44,17 @@ model Certificate {
   coAuthors     String?  // comma-separated names
 
   // Archive file info
-  archiveName   String   // original filename, e.g. "1.zip"
-  archiveSize   Int      // bytes
-  archivePath   String   // server path under /uploads
-  md5Hash       String   // hex MD5 of archive bytes
+  archiveName    String   // e.g. "20260902_1.zip" (YYYYMMDD_N.zip)
+  archiveSize    Int      // bytes
+  archivePath    String   // server path under /uploads
+  fileCount      Int      @default(1) // number of files inside the archive
+
+  // Hashes of the archive
+  md5Hash        String   // hex MD5 of archive bytes
+  sha256Hash     String   // hex SHA-256 of archive bytes
+
+  // Archive password (auto-generated 12 chars, only visible to author in dashboard)
+  archivePassword String  // plain-text 12-char password, AES-256 encrypted ZIP
 
   // Author snapshot at moment of deposit (denormalized for certificate stability)
   authorFirstName String
@@ -65,4 +77,5 @@ model Certificate {
 
   @@index([authorId])
   @@index([certYear, certSeq])
+  @@index([slug])
 }

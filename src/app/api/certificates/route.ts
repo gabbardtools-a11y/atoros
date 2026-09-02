@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/session';
 import { db } from '@/lib/db';
 
@@ -13,12 +13,16 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
+        slug: true,
         certNumber: true,
         workTitle: true,
         workType: true,
         archiveName: true,
         archiveSize: true,
+        fileCount: true,
         md5Hash: true,
+        sha256Hash: true,
+        archivePassword: true,
         status: true,
         createdAt: true,
       },

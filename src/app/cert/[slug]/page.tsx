@@ -7,13 +7,13 @@ import { Eye } from 'lucide-react';
 export const dynamic = 'force-dynamic';
 
 type Props = {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 export async function generateMetadata({ params }: Props) {
-  const { id } = await params;
-  const cert = await db.certificate.findUnique({ where: { id } });
+  const { slug } = await params;
+  const cert = await db.certificate.findUnique({ where: { slug } });
   if (!cert) return { title: 'Свидетельство не найдено — Atoros' };
   return {
     title: `Свидетельство № ${cert.certNumber} — Atoros`,
@@ -22,11 +22,11 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function CertPage({ params, searchParams }: Props) {
-  const { id } = await params;
+  const { slug } = await params;
   const sp = await searchParams;
   const printMode = sp.print === 'true';
 
-  const cert = await db.certificate.findUnique({ where: { id } });
+  const cert = await db.certificate.findUnique({ where: { slug } });
   if (!cert || cert.status !== 'published') {
     notFound();
   }
@@ -50,7 +50,7 @@ export default async function CertPage({ params, searchParams }: Props) {
             <Eye className="h-4 w-4" />
             <span>Публичная страница свидетельства</span>
           </div>
-          <PrintButtons certId={cert.id} />
+          <PrintButtons certSlug={cert.slug} />
         </div>
 
         <CertificateView cert={cert} authorEmail={author?.email ?? cert.authorEmail} />
