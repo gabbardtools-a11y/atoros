@@ -54,7 +54,7 @@ export default async function Home() {
               для подтверждения <span className="text-primary font-semibold">авторских прав и ноу-хау</span>
             </h1>
 
-            <p className="text-base md:text-lg text-muted-foreground mb-8 leading-relaxed max-w-xl">
+            <p className="text-base md:text-lg mb-8 leading-relaxed max-w-xl text-slate-700 dark:text-white/90">
               Загрузите архив с произведением — мы вычислим его уникальный цифровой отпечаток
               (хеш-сумму MD5) и опубликуем свидетельство о депонировании с уникальным номером.
               Подтверждение авторства в любой момент через онлайн-верификацию.
@@ -88,7 +88,7 @@ export default async function Home() {
               )}
             </div>
 
-            <div className="flex flex-wrap items-start gap-x-6 gap-y-2 text-xs text-muted-foreground">
+            <div className="flex flex-wrap items-start gap-x-6 gap-y-2 text-xs text-slate-700 dark:text-white/80">
               <div className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
                 Без бумажной почты

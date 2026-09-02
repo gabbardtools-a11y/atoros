@@ -7,6 +7,8 @@ export type HeroConfig = {
   speed: number;
   displacement: number;
   wireframe: boolean;
+  brightness: number;
+  scale: number;
   attractionEnabled: boolean;
   attractionRadius: number;
   attractionStrength: number;
@@ -22,6 +24,8 @@ export const DEFAULT_CONFIG: HeroConfig = {
   speed: 0.3,
   displacement: 0.5,
   wireframe: true,
+  brightness: 0.5,
+  scale: 1.0,
   attractionEnabled: true,
   attractionRadius: 2.0,
   attractionStrength: 0.5,
@@ -183,6 +187,40 @@ export function HeroControls({
             checked={config.wireframe}
             onChange={(v) => set('wireframe', v)}
           />
+
+          {/* Brightness */}
+          <Field
+            label="Общая яркость"
+            value={`${Math.round(config.brightness * 100)}%`}
+            hint="0 = невидимая · 1 = полная яркость"
+          >
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.05}
+              value={config.brightness}
+              onChange={(e) => set('brightness', +e.target.value)}
+              style={rangeStyle}
+            />
+          </Field>
+
+          {/* Scale */}
+          <Field
+            label="Общий размер"
+            value={config.scale.toFixed(2) + '×'}
+            hint="0.5 = меньше · 2 = больше"
+          >
+            <input
+              type="range"
+              min={0.3}
+              max={2.5}
+              step={0.05}
+              value={config.scale}
+              onChange={(e) => set('scale', +e.target.value)}
+              style={rangeStyle}
+            />
+          </Field>
 
           {/* Attraction section */}
           <SectionDivider>

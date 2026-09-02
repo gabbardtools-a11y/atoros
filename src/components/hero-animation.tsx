@@ -255,6 +255,11 @@ export function HeroAnimation({ config }: { config: HeroConfig }) {
           mesh.rotation.y += 8e-4 * s;
           mesh.rotation.x += 4e-4 * s;
 
+          // Apply brightness via canvas opacity
+          canvas.style.opacity = String(c.brightness);
+          // Apply scale
+          mesh.scale.setScalar(c.scale);
+
           mesh.updateMatrixWorld();
           const localPos = mousePosWorld.clone();
           mesh.worldToLocal(localPos);
