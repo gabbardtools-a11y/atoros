@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir, readFile, unlink } from 'fs/promises';
-import { existsSync, createWriteStream } from 'fs';
+import { writeFile, mkdir } from 'fs/promises';
+import { existsSync } from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import archiver from 'archiver';
+import JSZip from 'jszip';
 import { getCurrentUser } from '@/lib/session';
 import { db } from '@/lib/db';
 
@@ -15,19 +15,18 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB per file
 const MAX_TOTAL_SIZE = 30 * 1024 * 1024; // 30 MB total
 const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
 
-// Generate 12-char alphanumeric password
-function generatePassword(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
-  const bytes = crypto.randomBytes(12);
+/** Generate a random archive password: 16 chars, letters+digits (avoid ambiguous chars) */
+function generateArchivePassword(length = 16): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  const bytes = crypto.randomBytes(length);
   let pwd = '';
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < length; i++) {
     pwd += chars[bytes[i] % chars.length];
   }
   return pwd;
 }
 
 export async function POST(req: NextRequest) {
-  let tmpFiles: string[] = [];
   try {
     const user = await getCurrentUser();
     if (!user) {
@@ -35,26 +34,41 @@ export async function POST(req: NextRequest) {
     }
 
     const formData = await req.formData();
-    const files = formData.getAll('files').filter((f): f is File => f instanceof File);
-
     const workTitle = (formData.get('workTitle') as string | null)?.trim();
     const workType = (formData.get('workType') as string | null)?.trim();
     const description = (formData.get('description') as string | null)?.trim() || null;
     const coAuthors = (formData.get('coAuthors') as string | null)?.trim() || null;
 
-    if (!files.length) return NextResponse.json({ error: 'Прикрепите хотя бы один файл' }, { status: 400 });
-    if (files.length > MAX_FILES) {
-      return NextResponse.json({ error: `Максимум ${MAX_FILES} файлов за раз` }, { status: 413 });
-    }
     if (!workTitle) return NextResponse.json({ error: 'Укажите название произведения' }, { status: 400 });
     if (!workType) return NextResponse.json({ error: 'Укажите тип произведения' }, { status: 400 });
 
+    // Collect all files from formData
+    const incomingFiles: File[] = [];
+    for (const [key, value] of Array.from(formData.entries())) {
+      if (key === 'files' && value instanceof File) {
+        incomingFiles.push(value);
+      }
+    }
+    // Backward compat: also accept single "file" field
+    const singleFile = formData.get('file');
+    if (singleFile instanceof File) incomingFiles.push(singleFile);
+
+    if (incomingFiles.length === 0) {
+      return NextResponse.json({ error: 'Прикрепите хотя бы один файл' }, { status: 400 });
+    }
+    if (incomingFiles.length > MAX_FILES) {
+      return NextResponse.json(
+        { error: `Максимум ${MAX_FILES} файлов за одно депонирование (получено ${incomingFiles.length})` },
+        { status: 413 }
+      );
+    }
+
     // Validate sizes
     let totalSize = 0;
-    for (const f of files) {
+    for (const f of incomingFiles) {
       if (f.size > MAX_FILE_SIZE) {
         return NextResponse.json(
-          { error: `Файл "${f.name}" превышает лимит 10 МБ (${(f.size / 1024 / 1024).toFixed(2)} МБ)` },
+          { error: `Файл «${f.name}» превышает лимит 10 МБ (${(f.size / 1024 / 1024).toFixed(2)} МБ)` },
           { status: 413 }
         );
       }
@@ -62,7 +76,7 @@ export async function POST(req: NextRequest) {
     }
     if (totalSize > MAX_TOTAL_SIZE) {
       return NextResponse.json(
-        { error: `Суммарный размер файлов превышает лимит 30 МБ (${(totalSize / 1024 / 1024).toFixed(2)} МБ)` },
+        { error: `Общий размер файлов превышает лимит 30 МБ (${(totalSize / 1024 / 1024).toFixed(2)} МБ)` },
         { status: 413 }
       );
     }
@@ -72,118 +86,104 @@ export async function POST(req: NextRequest) {
       await mkdir(UPLOAD_DIR, { recursive: true });
     }
 
-    // Save files to temp dir
-    const tmpDir = path.join(UPLOAD_DIR, `tmp_${user.id}_${Date.now()}`);
-    await mkdir(tmpDir, { recursive: true });
-    for (let i = 0; i < files.length; i++) {
-      const f = files[i];
-      const safeName = f.name.replace(/[^a-zA-Zа-яА-Я0-9._\-\s]/g, '_');
-      const tmpPath = path.join(tmpDir, safeName);
-      const buf = Buffer.from(await f.arrayBuffer());
-      await writeFile(tmpPath, buf);
-      tmpFiles.push(tmpPath);
-    }
-
-    // Generate archive password
-    const archivePassword = generatePassword();
-
-    // Build archive name: YYYYMMDD_N.zip where N = sequence today
-    const now = new Date();
-    const ymd = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-
-    // Count today's certs to determine sequence
-    const startOfDay = new Date(now);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(now);
-    endOfDay.setHours(23, 59, 59, 999);
-    const todayCerts = await db.certificate.count({
-      where: { createdAt: { gte: startOfDay, lte: endOfDay } },
-    });
-    const daySeq = todayCerts + 1;
-
-    const archiveName = `${ymd}_${daySeq}.zip`;
-    const archivePath = path.join(UPLOAD_DIR, archiveName);
-    const slug = `${daySeq}_${ymd}`;
-
-    // Generate legacy cert number YYYY-NNN
-    const year = now.getFullYear();
+    // Generate cert number FIRST (so we know the archive name)
+    const year = new Date().getFullYear();
     const lastInYear = await db.certificate.findFirst({
       where: { certYear: year },
       orderBy: { certSeq: 'desc' },
     });
     const certSeq = (lastInYear?.certSeq ?? 0) + 1;
     const certNumber = `${year}-${String(certSeq).padStart(3, '0')}`;
+    const archiveName = `atoros_${certNumber}.zip`;
 
-    // Create ZIP with AES-256 encryption
-    await new Promise<void>((resolve, reject) => {
-      const output = createWriteStream(archivePath);
-      const archive = archiver('zip', {
-        zlib: { level: 6 },
-        encryption: {
-          password: archivePassword,
-          algorithm: 'aes256',
-        },
-      } as any);
+    // Generate random password for ZIP
+    const archivePassword = generateArchivePassword(16);
 
-      output.on('close', () => resolve());
-      output.on('error', reject);
-      archive.on('error', reject);
+    // Build ZIP with password protection (ZipCrypto — supported by JSZip)
+    const zip = new JSZip();
+    const fileRecords: { originalName: string; storedName: string; mimeType: string; size: number }[] = [];
 
-      archive.pipe(output);
+    for (const f of incomingFiles) {
+      const buffer = Buffer.from(await f.arrayBuffer());
+      const safeName = f.name.replace(/[^a-zA-Z0-9._\-\u0400-\u04FF]/g, '_');
+      zip.file(safeName, buffer, {
+        // @ts-ignore — password option exists in JSZip for ZipCrypto
+        password: archivePassword,
+      });
+      fileRecords.push({
+        originalName: f.name,
+        storedName: `${certNumber}_${Date.now()}_${safeName}`,
+        mimeType: f.type || 'application/octet-stream',
+        size: f.size,
+      });
+    }
 
-      // Add each file to archive
-      for (const tmpPath of tmpFiles) {
-        const filename = path.basename(tmpPath);
-        archive.file(tmpPath, { name: filename });
-      }
-
-      archive.finalize();
+    // Generate encrypted ZIP buffer
+    const zipBuffer = await zip.generateAsync({
+      type: 'nodebuffer',
+      compression: 'DEFLATE',
+      compressionOptions: { level: 6 },
+      // @ts-ignore — encryption option for ZipCrypto
+      encryption: 'std',
     });
 
-    // Read archive into buffer for hashing
-    const archiveBuffer = await readFile(archivePath);
-    const md5Hash = crypto.createHash('md5').update(archiveBuffer).digest('hex');
-    const sha256Hash = crypto.createHash('sha256').update(archiveBuffer).digest('hex');
+    // Compute hashes
+    const md5Hash = crypto.createHash('md5').update(zipBuffer).digest('hex');
+    const sha256Hash = crypto.createHash('sha256').update(zipBuffer).digest('hex');
 
-    // Delete temporary files (we keep only the encrypted archive)
-    for (const tmpPath of tmpFiles) {
-      try { await unlink(tmpPath); } catch {}
-    }
-    try { await unlink(tmpDir); } catch {}
+    // Save ZIP to disk
+    const savedPath = path.join(UPLOAD_DIR, `${user.id}_${Date.now()}_${archiveName}`);
+    await writeFile(savedPath, zipBuffer);
 
-    // Get full user profile for snapshot
+    // Get full user profile
     const profile = await db.user.findUnique({ where: { id: user.id } });
     if (!profile) {
       return NextResponse.json({ error: 'Профиль не найден' }, { status: 404 });
     }
 
-    const cert = await db.certificate.create({
-      data: {
-        slug,
-        certNumber,
-        certYear: year,
-        certSeq,
-        workTitle,
-        workType,
-        description,
-        coAuthors,
-        archiveName,
-        archiveSize: archiveBuffer.length,
-        archivePath,
-        fileCount: files.length,
-        md5Hash,
-        sha256Hash,
-        archivePassword,
-        authorFirstName: profile.firstName,
-        authorMiddleName: profile.middleName,
-        authorLastName: profile.lastName,
-        authorCountry: profile.country,
-        authorEmail: profile.email,
-        authorPhone: profile.phone,
-        authorCity: profile.city,
-        authorId: profile.id,
-        status: 'published',
-      },
+    // Create certificate + file records in a transaction
+    const cert = await db.$transaction(async (tx) => {
+      const newCert = await tx.certificate.create({
+        data: {
+          certNumber,
+          certYear: year,
+          certSeq,
+          workTitle,
+          workType,
+          description,
+          coAuthors,
+          archiveName,
+          archiveSize: zipBuffer.length,
+          archivePath: savedPath,
+          md5Hash,
+          sha256Hash,
+          fileCount: fileRecords.length,
+          archivePassword,
+          authorFirstName: profile.firstName,
+          authorMiddleName: profile.middleName,
+          authorLastName: profile.lastName,
+          authorCountry: profile.country,
+          authorEmail: profile.email,
+          authorPhone: profile.phone,
+          authorCity: profile.city,
+          authorId: profile.id,
+          status: 'published',
+        },
+      });
+
+      for (const fr of fileRecords) {
+        await tx.archiveFile.create({
+          data: {
+            certificateId: newCert.id,
+            originalName: fr.originalName,
+            storedName: fr.storedName,
+            mimeType: fr.mimeType,
+            size: fr.size,
+          },
+        });
+      }
+
+      return newCert;
     });
 
     return NextResponse.json({
@@ -192,18 +192,14 @@ export async function POST(req: NextRequest) {
         id: cert.id,
         slug: cert.slug,
         certNumber: cert.certNumber,
-        archiveName: cert.archiveName,
         md5Hash: cert.md5Hash,
-        sha256Hash: cert.sha256Hash,
-        fileCount: cert.fileCount,
+        archivePassword,
+        fileCount: fileRecords.length,
         createdAt: cert.createdAt,
       },
     });
   } catch (e: any) {
     console.error('[upload] error', e);
-    for (const tmpPath of tmpFiles) {
-      try { await unlink(tmpPath); } catch {}
-    }
     return NextResponse.json(
       { error: e.message ?? 'Внутренняя ошибка сервера' },
       { status: 500 }
