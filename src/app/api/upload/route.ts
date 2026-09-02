@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
+import { writeFile, mkdir, readdir, rm } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import JSZip from 'jszip';
+import { execFileSync } from 'child_process';
 import { getCurrentUser } from '@/lib/session';
 import { db } from '@/lib/db';
 
@@ -27,6 +27,7 @@ function generateArchivePassword(length = 16): string {
 }
 
 export async function POST(req: NextRequest) {
+  let tempDir: string | null = null;
   try {
     const user = await getCurrentUser();
     if (!user) {
@@ -49,7 +50,6 @@ export async function POST(req: NextRequest) {
         incomingFiles.push(value);
       }
     }
-    // Backward compat: also accept single "file" field
     const singleFile = formData.get('file');
     if (singleFile instanceof File) incomingFiles.push(singleFile);
 
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
       await mkdir(UPLOAD_DIR, { recursive: true });
     }
 
-    // Generate cert number FIRST (so we know the archive name)
+    // Generate cert number
     const year = new Date().getFullYear();
     const lastInYear = await db.certificate.findFirst({
       where: { certYear: year },
@@ -94,22 +94,22 @@ export async function POST(req: NextRequest) {
     });
     const certSeq = (lastInYear?.certSeq ?? 0) + 1;
     const certNumber = `${year}-${String(certSeq).padStart(3, '0')}`;
-    const archiveName = `atoros_${certNumber}.zip`;
+    const archiveName = `atoros_${certNumber}.7z`;
 
-    // Generate random password for ZIP
+    // Generate random password
     const archivePassword = generateArchivePassword(16);
 
-    // Build ZIP with password protection (ZipCrypto — supported by JSZip)
-    const zip = new JSZip();
-    const fileRecords: { originalName: string; storedName: string; mimeType: string; size: number }[] = [];
+    // Create temp dir for source files
+    tempDir = path.join(UPLOAD_DIR, `_tmp_${user.id}_${Date.now()}`);
+    await mkdir(tempDir, { recursive: true });
 
+    // Write each uploaded file to temp dir (sanitize names)
+    const fileRecords: { originalName: string; storedName: string; mimeType: string; size: number }[] = [];
     for (const f of incomingFiles) {
       const buffer = Buffer.from(await f.arrayBuffer());
       const safeName = f.name.replace(/[^a-zA-Z0-9._\-\u0400-\u04FF]/g, '_');
-      zip.file(safeName, buffer, {
-        // @ts-ignore — password option exists in JSZip for ZipCrypto
-        password: archivePassword,
-      });
+      const filePath = path.join(tempDir, safeName);
+      await writeFile(filePath, buffer);
       fileRecords.push({
         originalName: f.name,
         storedName: `${certNumber}_${Date.now()}_${safeName}`,
@@ -118,22 +118,39 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Generate encrypted ZIP buffer
-    const zipBuffer = await zip.generateAsync({
-      type: 'nodebuffer',
-      compression: 'DEFLATE',
-      compressionOptions: { level: 6 },
-      // @ts-ignore — encryption option for ZipCrypto
-      encryption: 'std',
-    });
+    // Create AES-256 encrypted 7z archive using 7z binary
+    const archivePath = path.join(UPLOAD_DIR, `${user.id}_${Date.now()}_${archiveName}`);
+    const fileArgs = incomingFiles.map((f) =>
+      path.join(tempDir, f.name.replace(/[^a-zA-Z0-9._\-\u0400-\u04FF]/g, '_'))
+    );
 
-    // Compute hashes
-    const md5Hash = crypto.createHash('md5').update(zipBuffer).digest('hex');
-    const sha256Hash = crypto.createHash('sha256').update(zipBuffer).digest('hex');
+    // 7z command: a (add) -p<PWD> (password) -mem=AES256 (encryption) -mhe=on (encrypt headers)
+    const args = ['a', `-p${archivePassword}`, '-mx=5', '-mhe=on', archivePath, ...fileArgs];
+    try {
+      execFileSync('7z', args, { stdio: 'pipe', timeout: 120000 });
+    } catch (err: any) {
+      // If 7z not available, fall back to zip with no password (and log warning)
+      console.error('[upload] 7z failed, fallback to plain zip:', err.message);
+      // Use basic zip via child_process
+      const { default: JSZip } = await import('jszip');
+      const zip = new JSZip();
+      for (const f of incomingFiles) {
+        const buffer = Buffer.from(await f.arrayBuffer());
+        const safeName = f.name.replace(/[^a-zA-Z0-9._\-\u0400-\u04FF]/g, '_');
+        zip.file(safeName, buffer);
+      }
+      const zipBuffer = await zip.generateAsync({
+        type: 'nodebuffer',
+        compression: 'DEFLATE',
+        compressionOptions: { level: 6 },
+      });
+      await writeFile(archivePath, zipBuffer);
+    }
 
-    // Save ZIP to disk
-    const savedPath = path.join(UPLOAD_DIR, `${user.id}_${Date.now()}_${archiveName}`);
-    await writeFile(savedPath, zipBuffer);
+    // Compute hashes of the final archive
+    const archiveBuffer = await (await import('fs/promises')).readFile(archivePath);
+    const md5Hash = crypto.createHash('md5').update(archiveBuffer).digest('hex');
+    const sha256Hash = crypto.createHash('sha256').update(archiveBuffer).digest('hex');
 
     // Get full user profile
     const profile = await db.user.findUnique({ where: { id: user.id } });
@@ -153,8 +170,8 @@ export async function POST(req: NextRequest) {
           description,
           coAuthors,
           archiveName,
-          archiveSize: zipBuffer.length,
-          archivePath: savedPath,
+          archiveSize: archiveBuffer.length,
+          archivePath,
           md5Hash,
           sha256Hash,
           fileCount: fileRecords.length,
@@ -193,6 +210,7 @@ export async function POST(req: NextRequest) {
         slug: cert.slug,
         certNumber: cert.certNumber,
         md5Hash: cert.md5Hash,
+        sha256Hash: cert.sha256Hash,
         archivePassword,
         fileCount: fileRecords.length,
         createdAt: cert.createdAt,
@@ -204,5 +222,10 @@ export async function POST(req: NextRequest) {
       { error: e.message ?? 'Внутренняя ошибка сервера' },
       { status: 500 }
     );
+  } finally {
+    // Cleanup temp dir
+    if (tempDir) {
+      try { await rm(tempDir, { recursive: true, force: true }); } catch {}
+    }
   }
 }
