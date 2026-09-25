@@ -1,0 +1,115 @@
+// Prisma schema for Atoros — Copyright Deposit Service
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  passwordHash String
+  firstName    String
+  middleName   String?
+  lastName     String
+  phone        String?
+  country      String        @default("RU")
+  city         String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  certificates Certificate[]
+}
+
+model Certificate {
+  id            String   @id @default(cuid())
+  slug          String   @unique @default(cuid())
+  // Public certificate number: e.g. 2026-001
+  certNumber    String   @unique
+  certYear      Int
+  certSeq       Int
+
+  // Work metadata
+  workTitle     String
+  workType      String   // text, image, audio, video, code, collection, other
+  description   String?
+  coAuthors     String?  // comma-separated names
+
+  // Archive info (created by service from individual files)
+  archiveName   String   // e.g. "atoros_2026-001.zip"
+  archiveSize   Int      // bytes (final ZIP size)
+  archivePath   String   // server path under /uploads
+  md5Hash       String   // hex MD5 of archive bytes
+  sha256Hash    String?  // hex SHA-256 of archive bytes
+  fileCount     Int      @default(1) // number of files inside archive
+
+  // Archive password (plain text — user can reveal in dashboard)
+  // In production: should be encrypted at rest; for test mode this is acceptable
+  archivePassword String?
+
+  // Cloud storage URLs (optional — only if credentials configured)
+  yandexDiskUrl       String?
+  googleDriveUrl      String?
+  yandexDiskUploadedAt DateTime?
+  googleDriveUploadedAt DateTime?
+
+  // FNS trusted timestamp (RFC 3161, TSP server uc.nalog.ru)
+  // GOST R 34.11-2012 hash of the archive, sent to FNS at deposit time.
+  // Token is the DER-encoded TimeStampResp, base64-encoded for storage.
+  fnsTimestampToken   String?  // base64-encoded DER TimeStampResp (~5 KB)
+  fnsTimestampTime    DateTime? // extracted from token — the official FNS-confirmed time
+  fnsGostHash         String?  // hex GOST R 34.11-2012 (Streebog) 256-bit hash of archive
+  fnsTokenSerial      String?  // serial number from FNS token (for verification)
+
+  // Torrent (BitTorrent) — decentralized storage of the encrypted archive
+  // Server runs transmission-daemon, always seeding.
+  torrentMagnet       String?  // full magnet URI (with btih + trackers)
+  torrentBtih         String?  // 40-char SHA-1 info hash (v1)
+  torrentPath         String?  // server path to .torrent file
+  torrentPieceLength  Int?     // piece size in bytes (16KB / 256KB / 1MB)
+  torrentCreatedAt    DateTime? // when torrent was created and added to transmission
+
+  // Author snapshot at moment of deposit (denormalized for certificate stability)
+  authorFirstName String
+  authorMiddleName String?
+  authorLastName  String
+  authorCountry   String
+  authorEmail     String
+  authorPhone     String?
+  authorCity      String?
+
+  // Relations
+  authorId      String
+  author        User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  // Individual files uploaded by user (before archiving)
+  files         ArchiveFile[]
+
+  // Status
+  status        String   @default("published") // published | pending | rejected
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([authorId])
+  @@index([certYear, certSeq])
+}
+
+model ArchiveFile {
+  id            String   @id @default(cuid())
+  certificateId String
+  certificate   Certificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+
+  originalName  String   // user's filename
+  storedName    String   // server-side filename (cuid + extension)
+  mimeType      String
+  size          Int      // bytes
+
+  createdAt     DateTime @default(now())
+
+  @@index([certificateId])
+}
