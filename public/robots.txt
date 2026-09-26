@@ -1,0 +1,26 @@
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Yandex
+Allow: /
+
+User-agent: *
+Allow: /
+
+# Block API and auth paths from indexing
+Disallow: /api/
+Disallow: /auth/login
+Disallow: /auth/register
+Disallow: /dashboard
+
+# Sitemap
+Sitemap: https://atoros.ru/sitemap.xml
